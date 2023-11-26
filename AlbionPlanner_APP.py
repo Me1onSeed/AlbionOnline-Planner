@@ -1,10 +1,11 @@
+# Author: GuaZiGuaZi
 import sys
 import pyperclip
 import winsound
 import win32com.client as win
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QCompleter, QShortcut
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
-from PyQt5.QtCore import Qt, QDateTime, QTime, QTimer
+from PyQt5.QtCore import Qt, QDateTime, QTime, QTimer, QStringListModel
 
 import AlbionPlanner_UI  # UI文件
 
@@ -17,18 +18,25 @@ if __name__ == '__main__':
     ui.setupUi(MainWindow)
     MainWindow.show()
 
-
     # MapCompleter 地图名自动填充
-    def fillMapName(completion):
-        tc = ui.lineMap.cursor()
-        extraLength = (len(completion) - len(ui.lineMap.text()))
-        tc.movePosition(tc.Left)
-        tc.select(tc.WordUnderCursor)
-        tc.insertText(completion)
-        ui.lineMap.setCursor(tc)
-        ui.lineMap.setCursorPosition(extraLength)
-#    ui.mapCompleter.activated.connect(fillMapName)
-
+    # from map_name import map_name_list, map_abbr_list
+    from map_list import map_list
+    MapCompeleter = QCompleter(map_list)	# 地图全名
+    MapCompeleter.setFilterMode(Qt.MatchContains)               # 匹配内容mode	MatchStartsWith 开头匹配（默认）/MatchContains 内容匹配
+    MapCompeleter.setCompletionMode(QCompleter.PopupCompletion) # 填充mode		PopupCompletion /InlineCompletion /UnfilteredPopupCompletion
+    MapCompeleter.setModelSorting(QCompleter.CaseSensitivelySortedModel)	# CaseSensitivelySortedModel 大小写敏感 /CaseInsensitivelySortedModel /UnsortedModel
+    MapCompeleter.setCaseSensitivity(False)                     # 匹配大小写
+    MapCompeleter_abbr = QCompleter(map_list)	# 地图缩写
+    MapCompeleter_abbr.setFilterMode(Qt.MatchEndsWith)               # 匹配内容mode	MatchEndsWith 结尾匹配
+    MapCompeleter_abbr.setCompletionMode(QCompleter.PopupCompletion)
+    MapCompeleter_abbr.setModelSorting(QCompleter.CaseSensitivelySortedModel)	# CaseSensitivelySortedModel 大小写敏感 /CaseInsensitivelySortedModel /UnsortedModel
+    MapCompeleter_abbr.setCaseSensitivity(False)                     # 匹配大小写
+    def completeMapName():
+        if ui.checkFull.isChecked() == True: # 全名和缩写二选一
+            ui.lineMap.setCompleter(MapCompeleter)
+        else:
+            ui.lineMap.setCompleter(MapCompeleter_abbr)
+    ui.lineMap.textChanged.connect(completeMapName)
 
     # comboBox 更改资源类型
     def RTypeChange():    # 资源类型
@@ -113,11 +121,10 @@ if __name__ == '__main__':
             elif ifLocal == 1: # utc+8
                 MainWindow.setTabOrder(ui.tabTimeZone, ui.timeBeijing)
                 MainWindow.setTabOrder(ui.timeBeijing, ui.ButtonAdd)
-
     ui.tabTimeOrClock.currentChanged.connect(timeTypeChange)
     ui.tabTimeZone.currentChanged.connect(timeTypeChange)
 
-    Speak = win.Dispatch("SAPI.SpVoice") # 语音播报声音
+    # Speak = win.Dispatch("SAPI.SpVoice") # 语音播报声音
 
     ## ButtonAdd 添加资源
     # 先建立timer 按下buttonAdd后 计时才会开始
@@ -138,7 +145,7 @@ if __name__ == '__main__':
         RLvl = ui.comboBoxRLvl.currentText()
 
         if RType in ('能量核心（球）', '能量水晶（风）', '城堡', '哨站'):
-            color = RColor.replace('色','') # 去除了色字 '蓝' '绿'
+            Rcolor = RColor.replace('色','') # 去除了色字 '蓝' '绿'
             if RType == '能量核心（球）':
                 resourceString = '球'
             elif RType == '能量水晶（风）':
@@ -147,7 +154,7 @@ if __name__ == '__main__':
                 resourceString = '城堡'
             elif RType == '哨站':
                 resourceString = '哨站'
-            resourceString = color+' '+resourceString # '紫 城堡' '金 风'
+            resourceString = Rcolor+''+resourceString # '紫城堡' '金风'
         elif RType == '野外宝箱':
             resourceString = RColor # '小箱'
         elif RType == "采集资源(.4)":
@@ -158,10 +165,66 @@ if __name__ == '__main__':
         ui.table.setItem(0,2,QTableWidgetItem(resourceString))
         ui.table.item(0,2).setTextAlignment(Qt.AlignCenter)
 
-        # 资源图标 icon
-        #icon = QIcon("icons/*.png")
-        iconTableItem = ui.table.item(0,0)
-        #iconTableItem.setIcon(icon)
+        # (0,0)资源图标 icon
+        if RType == "采集资源(.4)":
+            if RColor == '皮':
+                icon = QIcon("icons/hide.png")
+            if RColor == '棉':
+                icon = QIcon("icons/fiber.png")
+            if RColor == '木':
+                icon = QIcon("icons/wood.png")
+            if RColor == '矿':
+                icon = QIcon("icons/ore.png")
+            if RColor == '石':
+                icon = QIcon("icons/stone.png")
+        elif RType == '能量核心（球）':
+            if RColor == '绿色':
+                icon = QIcon("icons/core_green.png")
+            if RColor == '蓝色':
+                icon = QIcon("icons/core_blue.png")
+            if RColor == '紫色':
+                icon = QIcon("icons/core_purple.png")
+            if RColor == '金色':
+                icon = QIcon("icons/core_gold.png")
+        elif RType == '能量水晶（风）':
+            if RColor == '绿色':
+                icon = QIcon("icons/vortex_green.png")
+            if RColor == '蓝色':
+                icon = QIcon("icons/vortex_blue.png")
+            if RColor == '紫色':
+                icon = QIcon("icons/vortex_purple.png")
+            if RColor == '金色':
+                icon = QIcon("icons/vortex_gold.png")
+        elif RType == '领地':
+            icon = QIcon("icons/territory.png")
+        elif RType == '猛犸象':
+            icon = QIcon("icons/elephant.png")
+        elif RType == '城堡':
+            if RColor == '绿色':
+                icon = QIcon("icons/castle_green.png")
+            if RColor == '蓝色':
+                icon = QIcon("icons/castle_blue.png")
+            if RColor == '紫色':
+                icon = QIcon("icons/castle_purple.png")
+            if RColor == '金色':
+                icon = QIcon("icons/castle_gold.png")
+        elif RType == '哨站':
+            if RColor == '绿色':
+                icon = QIcon("icons/outpost_green.png")
+            if RColor == '蓝色':
+                icon = QIcon("icons/outpost_blue.png")
+            if RColor == '紫色':
+                icon = QIcon("icons/outpost_purple.png")
+            if RColor == '金色':
+                icon = QIcon("icons/outpost_gold.png")
+        elif RType == '野外宝箱':
+            if RColor == '小箱':
+                icon = QIcon("icons/chest_small.png")
+            if RColor == '中箱':
+                icon = QIcon("icons/chest_middle.png")
+            if RColor == '大箱':
+                icon = QIcon("icons/chest_big.png")
+        ui.table.item(0,0).setIcon(icon)
 
         # (0,3)地图
         map = ui.lineMap.text() # idea:QCompleter
@@ -204,13 +267,13 @@ if __name__ == '__main__':
         if_time_up = 0
         return if_time_up # 输出是否到期，用于后面到期时的警报
     ui.ButtonAdd.clicked.connect(addResource)
-    shortcutAdd = [None]*6  # 快捷键回车也可添加 Return是大键盘回车 Enter是小键盘回车
+    shortcutAdd = [None]*6  # 快捷键回车也可添加 Return 是大键盘回车 Enter 是小键盘回车
     shortcutAdd[0] = QShortcut(QKeySequence('Enter'), ui.timeTimeRemain)
     shortcutAdd[1] = QShortcut(QKeySequence('Enter'), ui.timeBeijing)
     shortcutAdd[2] = QShortcut(QKeySequence('Enter'), ui.timeUTC)
-    shortcutAdd[3] = QShortcut(QKeySequence('Return'), ui.timeTimeRemain)
-    shortcutAdd[4] = QShortcut(QKeySequence('Return'), ui.timeBeijing)
-    shortcutAdd[5] = QShortcut(QKeySequence('Return'), ui.timeUTC)
+    shortcutAdd[3] = QShortcut(QKeySequence('Enter'), ui.timeTimeRemain)
+    shortcutAdd[4] = QShortcut(QKeySequence('Enter'), ui.timeBeijing)
+    shortcutAdd[5] = QShortcut(QKeySequence('Enter'), ui.timeUTC)
     for i in range(6):
         shortcutAdd[i].activated.connect(addResource)
 
@@ -299,45 +362,46 @@ if __name__ == '__main__':
     shortcutClip.activated.connect(toClipboard)
 
 
-    # 剩余时间后，自动复制至剪贴板，并发出提示
+    # 剩余时间后，自动复制至剪贴板，并发出警报提示
     def reminder():
-        rowCount = ui.table.rowCount()
-        time_utc = QDateTime.currentDateTimeUtc().time() # 读取当前utc时间, 进而计算剩余时间, 进而化为QTime格式
-        for row in range(0,rowCount-1):
-            clock_utc_string = ui.table.item(row,5).text() # 读取资源在第5列存的utc时间
-            clock_utc = QTime.fromString(clock_utc_string,"HH:mm:ss")
-            seconds_remain = time_utc.secsTo(clock_utc)
-            if seconds_remain in [0, 60, 120, 300]:   # 5min 2min 1min
-                if seconds_remain == 300: # 5min 1beep
-                    winsound.Beep(500,1000)
-                elif seconds_remain == 120: # 2min 2beep
-                    winsound.Beep(500,500)
-                elif seconds_remain == 60: # 1min 3beep
-                    winsound.Beep(500,400)
-                if not ui.table.item(row,2) == None:
-                    RInformation = ui.table.item(row,2).text()
-                    # 图标及信息
-                    if RInformation[-2:-1] in ('城堡', '哨站'):
-                        copyInfor = '(城堡) '+RInformation
-                    elif RInformation[-1] in ('球','风'):
-                        if RInformation[-1] == '球':
-                            copyInfor2 = '核心)'
-                        elif RInformation[-1] == '风':
-                            copyInfor2 = '水晶)'
-                        if RInformation[0] != '金':
-                            copyInfor1 = '('+RInformation[0]+'色'
+        if ui.checkAlert.isChecked() == True: # 警报提示check勾选
+            rowCount = ui.table.rowCount()
+            time_utc = QDateTime.currentDateTimeUtc().time() # 读取当前utc时间, 进而计算剩余时间, 进而化为QTime格式
+            for row in range(0,rowCount-1):
+                clock_utc_string = ui.table.item(row,5).text() # 读取资源在第5列存的utc时间
+                clock_utc = QTime.fromString(clock_utc_string,"HH:mm:ss")
+                seconds_remain = time_utc.secsTo(clock_utc)
+                if seconds_remain in [0, 60, 120, 300]:   # 5min 2min 1min
+                    if seconds_remain == 300: # 5min 1beep
+                        winsound.Beep(500,1000)
+                    elif seconds_remain == 120: # 2min 2beep
+                        winsound.Beep(500,500)
+                    elif seconds_remain == 60: # 1min 3beep
+                        winsound.Beep(500,400)
+                    if not ui.table.item(row,2) == None:
+                        RInformation = ui.table.item(row,2).text()
+                        # 图标及信息
+                        if RInformation[-2:-1] in ('城堡', '哨站'):
+                            copyInfor = '(城堡) '+RInformation
+                        elif RInformation[-1] in ('球','风'):
+                            if RInformation[-1] == '球':
+                                copyInfor2 = '核心)'
+                            elif RInformation[-1] == '风':
+                                copyInfor2 = '水晶)'
+                            if RInformation[0] != '金':
+                                copyInfor1 = '('+RInformation[0]+'色'
+                            else:
+                                copyInfor1 = '(橘色'
+                            copyInfor = copyInfor1+copyInfor2
                         else:
-                            copyInfor1 = '(橘色'
-                        copyInfor = copyInfor1+copyInfor2
-                    else:
-                        copyInfor = RInformation
-                    # 地图
-                    RMap = ui.table.item(row,3).text()
-                    copyMap = '@'+RMap
-                    # 剩余时间
-                    copyTimeRemain = ui.table.item(row,1).text()
-                    copyString = copyInfor+' '+copyMap+' (计时)'+copyTimeRemain
-                    pyperclip.copy(copyString)
+                            copyInfor = RInformation
+                        # 地图
+                        RMap = ui.table.item(row,3).text()
+                        copyMap = '@'+RMap
+                        # 剩余时间
+                        copyTimeRemain = ui.table.item(row,1).text()
+                        copyString = copyInfor+' '+copyMap+' (计时)'+copyTimeRemain
+                        pyperclip.copy(copyString)
     timer.timeout.connect(reminder)
 
 

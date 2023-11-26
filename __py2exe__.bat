@@ -1,0 +1,1 @@
+pyinstaller -w -i AlbionPlanner.ico AlbionPlanner_APP.py AlbionPlanner_UI.py -p C:\Users\Administrator\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages
