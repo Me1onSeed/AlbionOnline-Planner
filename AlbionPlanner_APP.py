@@ -1,8 +1,9 @@
 # Author: GuaZiGuaZi
 import sys
-import pyperclip
-import winsound
-import win32com.client as win
+import os
+if os.name != 'posix':
+    import winsound
+    import win32com.client as win
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QCompleter, QShortcut
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
 from PyQt5.QtCore import Qt, QDateTime, QTime, QTimer, QStringListModel
@@ -357,7 +358,8 @@ if __name__ == '__main__':
 
         copyString = copyInfor+' '+copyMap+' (计时)'+copyTimeRemain
         pyperclip.copy(copyString)
-        winsound.Beep(4000,200)
+        if os.name != 'posix':
+            winsound.Beep(4000,200)
     ui.ButtonClip.clicked.connect(toClipboard)
     shortcutClip.activated.connect(toClipboard)
 
@@ -372,12 +374,13 @@ if __name__ == '__main__':
                 clock_utc = QTime.fromString(clock_utc_string,"HH:mm:ss")
                 seconds_remain = time_utc.secsTo(clock_utc)
                 if seconds_remain in [0, 60, 120, 300]:   # 5min 2min 1min
-                    if seconds_remain == 300: # 5min 1beep
-                        winsound.Beep(500,1000)
-                    elif seconds_remain == 120: # 2min 2beep
-                        winsound.Beep(500,500)
-                    elif seconds_remain == 60: # 1min 3beep
-                        winsound.Beep(500,400)
+                    if os.name != 'posix':
+                        if seconds_remain == 300: # 5min 1beep
+                            winsound.Beep(500,1000)
+                        elif seconds_remain == 120: # 2min 2beep
+                            winsound.Beep(500,500)
+                        elif seconds_remain == 60: # 1min 3beep
+                            winsound.Beep(500,400)
                     if not ui.table.item(row,2) == None:
                         RInformation = ui.table.item(row,2).text()
                         # 图标及信息
