@@ -1,6 +1,7 @@
 # Author: GuaZiGuaZi
 import sys
 import os
+import pyperclip
 if os.name != 'posix':
     import winsound
     import win32com.client as win
