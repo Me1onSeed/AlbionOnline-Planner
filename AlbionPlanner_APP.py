@@ -1,4 +1,4 @@
-# Author: GuaZiGuaZi
+# Contributors: Me1onSeed(GuaZiGuaZi), duoduo70
 import sys
 import os
 import pyperclip
